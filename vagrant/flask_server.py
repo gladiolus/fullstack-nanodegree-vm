@@ -12,7 +12,15 @@ def restaurants():
     return render_template("restaurants.html", restaurant=restaurant)
 
 
+@app.route("/restaurants/<int:restaurant_id>/json", methods=["GET"])
+def restaurant_json(restaurant_id):
+    with DBSession() as sess:
+        restaurant = sess.query(Restaurant).filter_by(id=restaurant_id).one()
+    return jsonify(restaurant.serialize())
+
+
 @app.route("/restaurants/<int:restaurant_id>/", methods=["GET"])
+@app.route("/restaurants/<int:restaurant_id>/menu", methods=["GET"])
 def restaurant(restaurant_id):
     with DBSession() as sess:
         restaurant = sess.query(Restaurant).filter_by(id=restaurant_id).one()
@@ -20,11 +28,12 @@ def restaurant(restaurant_id):
     return render_template("menu.html", restaurant=restaurant, menuitems=menuitems)
 
 
-@app.route("/restaurants/<int:restaurant_id>/json", methods=["GET"])
-def restaurant_json(restaurant_id):
+@app.route("/restaurants/<int:restaurant_id>/menu/json", methods=["GET"])
+def restaurant_menu_json(restaurant_id):
     with DBSession() as sess:
         restaurant = sess.query(Restaurant).filter_by(id=restaurant_id).one()
-    return jsonify(restaurant.serialize())
+        menuitems = sess.query(MenuItem).filter_by(restaurant_id=restaurant.id)
+    return jsonify(list(item.serialize() for item in menuitems))
 
 
 @app.route("/restaurants/<int:restaurant_id>/edit", methods=["GET", "POST"])
@@ -66,6 +75,7 @@ def menu_item_json(restaurant_id, menu_id):
 
 
 @app.route("/restaurants/<int:restaurant_id>/<int:menu_id>/edit", methods=["GET", "POST"])
+@app.route("/restaurants/<int:restaurant_id>/menu/<int:menu_id>/edit", methods=["GET", "POST"])
 def menu_item_edit(restaurant_id, menu_id):
     if request.method == "POST":
         with DBSession() as sess:
@@ -83,6 +93,7 @@ def menu_item_edit(restaurant_id, menu_id):
 
 
 @app.route("/restaurants/<int:restaurant_id>/<int:menu_id>/delete", methods=["GET", "POST"])
+@app.route("/restaurants/<int:restaurant_id>/menu/<int:menu_id>/delete", methods=["GET", "POST"])
 def menu_item_delete(restaurant_id, menu_id):
     if request.method == "POST":
         with DBSession() as sess:
